@@ -3,13 +3,9 @@ package appstore
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"os"
 	"strconv"
-	"strings"
 	"time"
-
-	"github.com/parnurzeal/gorequest"
 )
 
 const (
@@ -21,6 +17,8 @@ const (
 type Config struct {
 	IsProduction bool
 	TimeOut      time.Duration
+	Retry        bool
+	Debug        bool
 }
 
 // IAPClient is an interface to call validation API in App Store
@@ -32,6 +30,8 @@ type IAPClient interface {
 type Client struct {
 	URL     string
 	TimeOut time.Duration
+	Retry   bool
+	Debug   bool
 }
 
 // HandleError returns error message by status code
@@ -85,6 +85,8 @@ func NewWithConfig(config Config) Client {
 	client := Client{
 		URL:     SandboxURL,
 		TimeOut: config.TimeOut,
+		Retry:   config.Retry,
+		Debug:   config.Debug,
 	}
 	if config.IsProduction {
 		client.URL = ProductionURL
@@ -95,24 +97,26 @@ func NewWithConfig(config Config) Client {
 
 // Verify sends receipts and gets validation result
 func (c *Client) Verify(req IAPRequest) (*Receipt, error) {
-	res, body, errs := gorequest.New().
-		Post(c.URL).
-		Send(req).
-		Timeout(c.TimeOut).
-		End()
+	resp, err := post(c.URL, option{
+		Payload: req,
+		Timeout: c.TimeOut,
+		Retry:   c.Retry,
+		Debug:   c.Debug,
+	})
+	switch {
+	case err != nil:
+		return nil, err
+	case !resp.Ok:
+		return nil, errors.New("An error occurred in IAP - code:" + strconv.Itoa(resp.StatusCode))
+	}
 
-	if errs != nil {
-		return nil, fmt.Errorf("%v", errs)
-	}
-	if res.StatusCode < 200 || res.StatusCode >= 300 {
-		return nil, errors.New("An error occurred in IAP - code:" + strconv.Itoa(res.StatusCode))
-	}
+	body := resp.Bytes()
 
 	// iOS7 formant
 	result := IAPResponseIOS7{
 		rawReceipt: req.ReceiptData,
 	}
-	err := json.NewDecoder(strings.NewReader(body)).Decode(&result)
+	err = json.Unmarshal(body, &result)
 	if err == nil && result.Environment != "" {
 		return result.ToReceipt(), nil
 	}
@@ -121,7 +125,7 @@ func (c *Client) Verify(req IAPRequest) (*Receipt, error) {
 	resultIOS6 := IAPResponseIOS6{
 		rawReceipt: req.ReceiptData,
 	}
-	err = json.NewDecoder(strings.NewReader(body)).Decode(&resultIOS6)
+	err = json.Unmarshal(body, &resultIOS6)
 	if err != nil {
 		return nil, err
 	}

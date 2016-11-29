@@ -40,7 +40,7 @@ go get github.com/evalphobia/go-iap/playstore
 ```go
 import(
 	"log"
-	
+
 	"github.com/evalphobia/go-iap/appstore"
 )
 
@@ -48,6 +48,8 @@ func buy() {
 	client := appstore.NewWithConfig(appstore.Config{
 		TimeOut:      30 * time.Second,
 		IsProduction: true,
+		Retry:        true,  // retry when HTTP error status
+		Debug:        false, // show HTTP request
 	})
 
 	// call apple store api to check receipt
@@ -90,7 +92,7 @@ func buy() {
 		log.Errof("cannot find valid in_app data by unknown error")
 		return
 	}
-	
+
 	// save iap data of valid receipt...
 }
 ```
@@ -100,7 +102,7 @@ func buy() {
 ```go
 import(
 	"log"
-	
+
 	"golang.org/x/oauth2"
 	"github.com/evalphobia/go-iap/playstore"
 )
