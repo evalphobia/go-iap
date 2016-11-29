@@ -3,6 +3,7 @@ package appstore
 import (
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -170,10 +171,15 @@ func TestVerifyTimeout(t *testing.T) {
 		ReceiptData: "dummy data",
 	}
 
-	expected := errors.New("")
 	_, actual := client.Verify(req)
-	if !reflect.DeepEqual(reflect.TypeOf(actual), reflect.TypeOf(expected)) {
+	netErr, ok := actual.(net.Error)
+	if !ok {
+		var expected net.Error
 		t.Errorf("got %v\nwant %v", actual, expected)
+		return
+	}
+	if !netErr.Timeout() {
+		t.Errorf("got %v\n, want Timeout() is true", netErr)
 	}
 }
 

@@ -76,7 +76,7 @@ func (o option) hasPayload() bool {
 	return o.Payload != nil
 }
 
-// response is wrapper struct pf *gentleman.Response
+// response is wrapper struct of *gentleman.Response
 type response struct {
 	*gentleman.Response
 }
