@@ -4,13 +4,14 @@ const verIOS7 = 7
 
 // The IAPResponse type has the response properties
 type IAPResponseIOS7 struct {
-	responseVersion   int         `json:"-"`
-	rawReceipt        string      `json:"-"`
-	Status            int         `json:"status"`
-	Environment       string      `json:"environment"`
-	Receipt           ReceiptIOS7 `json:"receipt"`
-	LatestReceiptInfo []InApp     `json:"latest_receipt_info"`
-	LatestReceipt     string      `json:"latest_receipt"`
+	responseVersion    int                  `json:"-"`
+	rawReceipt         string               `json:"-"`
+	Status             int                  `json:"status"`
+	Environment        string               `json:"environment"`
+	Receipt            ReceiptIOS7          `json:"receipt"`
+	LatestReceiptInfo  []InApp              `json:"latest_receipt_info"`
+	LatestReceipt      string               `json:"latest_receipt"`
+	PendingRenewalInfo []PendingRenewalInfo `json:"pending_renewal_info"`
 }
 
 func NewIAPResponseIOS7(rc string) *IAPResponseIOS7 {
@@ -37,6 +38,7 @@ func (r *IAPResponseIOS7) ToReceipt() *Receipt {
 	}
 	receipt.InApps = ToReceiptInApps(rr.InApp)
 	receipt.LatestReceiptInfo = ToReceiptInApps(r.LatestReceiptInfo)
+	receipt.PendingRenewalInfo = ToReceiptPendingRenewalInfos(r.PendingRenewalInfo)
 	return receipt
 }
 
@@ -68,4 +70,14 @@ type InApp struct {
 	OriginalPurchaseDate
 	ExpiresDate
 	CancellationDate
+}
+
+// PendingRenewalInfo auto-renewable subscriptions
+type PendingRenewalInfo struct {
+	ExpirationIntent   string `json:"expiration_intent"`
+	AutoRenewProductID string `json:"auto_renew_product_id"`
+	RetryFlag          string `json:"is_in_billing_retry_period"`
+	AutoRenewStatus    string `json:"auto_renew_status"`
+	PriceConsentStatus string `json:"price_consent_status"`
+	ProductID          string `json:"product_id"`
 }

@@ -53,3 +53,22 @@ func ToTime(msString string) time.Time {
 	}
 	return time.Unix(int64(ms/1000), 0)
 }
+
+func ToReceiptPendingRenewalInfos(pris []PendingRenewalInfo) ReceiptPendingRenewalInfos {
+	var rpris ReceiptPendingRenewalInfos
+	for _, pri := range pris {
+		rpris = append(rpris, ToReceiptPendingRenewalInfo(pri))
+	}
+	return rpris
+}
+
+func ToReceiptPendingRenewalInfo(pri PendingRenewalInfo) *ReceiptPendingRenewalInfo {
+	return &ReceiptPendingRenewalInfo{
+		ExpirationIntent:   ToInt64(pri.ExpirationIntent),
+		AutoRenewProductID: pri.AutoRenewProductID,
+		RetryFlag:          ToBool(pri.RetryFlag),
+		AutoRenewStatus:    ToBool(pri.AutoRenewStatus),
+		PriceConsentStatus: ToBool(pri.PriceConsentStatus),
+		ProductID:          pri.ProductID,
+	}
+}

@@ -24,6 +24,8 @@ type Receipt struct {
 
 	LatestReceiptInfo ReceiptInApps
 	LatestReceipt     string
+
+	PendingRenewalInfo ReceiptPendingRenewalInfos
 }
 
 func (r *Receipt) String() string {
