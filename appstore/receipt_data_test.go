@@ -8475,7 +8475,16 @@ var testReceiptString = `{
       "is_trial_period": "false"
     }
   ],
-  "latest_receipt": "<latest receipt string>"
+  "latest_receipt": "<latest receipt string>",
+  "pending_renewal_info": [
+    {
+      "auto_renew_product_id": "com.example.app.subscription_1",
+      "auto_renew_status": "1",
+      "expiration_intent": "0",
+      "is_in_billing_retry_period": "1",
+      "product_id": "com.example.app.subscription_1"
+    }
+  ]
 }`
 
 var testReceiptString2 = `{

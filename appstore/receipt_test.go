@@ -343,3 +343,23 @@ func TestGetTransactionIDsByProductWithoutExpired(t *testing.T) {
 		}
 	}
 }
+
+func TestReceiptPendingRenewalInfoIsAutoRenewable(t *testing.T) {
+	assert := assert.New(t)
+
+	tests := []struct {
+		receipt   *Receipt
+		productID string
+		expected  bool
+	}{
+		{testReceipt1, "com.example.app.subscription_1", true},
+		{testReceipt1, "com.example.app.subscription_2", false},
+	}
+
+	for _, tt := range tests {
+		assert.Equal(
+			tt.expected,
+			tt.receipt.PendingRenewalInfo.IsAutoRenewable(tt.productID),
+		)
+	}
+}
