@@ -2,6 +2,7 @@ package appstore
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -21,7 +22,7 @@ func TestIAPResponseIOS6(t *testing.T) {
 	rc := "receipt"
 	r := NewIAPResponseIOS6(rc)
 
-	err := json.Unmarshal([]byte(_receipt), r)
+	err := json.Unmarshal([]byte(testReceiptStringIOS6_1), r)
 	assert.Nil(err)
 	assert.Equal(0, r.Status)
 	assert.Equal("dummy_latest_receipt", r.LatestReceipt)
@@ -47,54 +48,127 @@ func TestIAPResponseIOS6(t *testing.T) {
 func TestToIOS7(t *testing.T) {
 	assert := assert.New(t)
 
+	baseResponse := IAPResponseIOS7{
+		Status:          0,
+		responseVersion: 6,
+		rawReceipt:      "receipt",
+		LatestReceipt:   "dummy_latest_receipt",
+		Environment:     "",
+		Receipt: ReceiptIOS7{
+			ReceiptType:                "",
+			AdamID:                     0,
+			AppItemID:                  900000001,
+			BundleID:                   "com.example.app",
+			ApplicationVersion:         "0.1",
+			DownloadID:                 0,
+			OriginalApplicationVersion: "",
+			RequestDate: RequestDate{
+				RequestDate: "",
+			},
+			OriginalPurchaseDate: OriginalPurchaseDate{
+				OriginalPurchaseDate:    "2015-05-09 23:31:28 Etc/GMT",
+				OriginalPurchaseDateMS:  "1431214288317",
+				OriginalPurchaseDatePST: "2015-05-09 16:31:28 America/Los_Angeles",
+			},
+		},
+	}
+
+	baseInApp := InApp{
+		Quantity:                  "1",
+		ProductID:                 "com.example.product.item",
+		TransactionID:             "90000000000001",
+		OriginalTransactionID:     "90000000000001",
+		VersionExternalIdentifier: "900000000",
+		WebOrderLineItemID:        "70000000000001",
+		PurchaseDate: PurchaseDate{
+			PurchaseDate:    "2015-05-09 23:31:25 Etc/GMT",
+			PurchaseDateMS:  "1431214285000",
+			PurchaseDatePST: "2015-05-09 16:31:25 America/Los_Angeles",
+		},
+		OriginalPurchaseDate: OriginalPurchaseDate{
+			OriginalPurchaseDate:    "2015-05-09 23:31:28 Etc/GMT",
+			OriginalPurchaseDateMS:  "1431214288317",
+			OriginalPurchaseDatePST: "2015-05-09 16:31:28 America/Los_Angeles",
+		},
+		ExpiresDate: ExpiresDate{
+			ExpiresDate:    "2015-06-09 23:31:25 Etc/GMT",
+			ExpiresDateMS:  "1433892685000",
+			ExpiresDatePST: "2015-06-09 16:31:25 America/Los_Angeles",
+		},
+		CancellationDate: CancellationDate{},
+	}
+
+	baseLatestReceiptInfo := InApp{
+		Quantity:                  "1",
+		ProductID:                 "com.example.product.item",
+		TransactionID:             "90000000000002",
+		OriginalTransactionID:     "10000010000000",
+		VersionExternalIdentifier: "",
+		WebOrderLineItemID:        "70000000000002",
+		PurchaseDate: PurchaseDate{
+			PurchaseDate:    "2015-11-10 00:31:25 Etc/GMT",
+			PurchaseDateMS:  "1447115485000",
+			PurchaseDatePST: "2015-11-09 16:31:25 America/Los_Angeles",
+		},
+		OriginalPurchaseDate: OriginalPurchaseDate{
+			OriginalPurchaseDate:    "2015-05-09 23:31:28 Etc/GMT",
+			OriginalPurchaseDateMS:  "1431214288000",
+			OriginalPurchaseDatePST: "2015-05-09 16:31:28 America/Los_Angeles",
+		},
+		ExpiresDate: ExpiresDate{
+			ExpiresDate:    "2015-12-10 00:31:25 Etc/GMT",
+			ExpiresDateMS:  "1449707485000",
+			ExpiresDatePST: "2015-12-09 16:31:25 America/Los_Angeles",
+		},
+		CancellationDate: CancellationDate{},
+	}
+
+	expectedResponse := baseResponse
+	expectedResponse.Receipt.InApp = []InApp{baseInApp}
+	expectedResponse.LatestReceiptInfo = []InApp{baseLatestReceiptInfo}
+
+	tests := []struct {
+		targetReceipt              string
+		expectedResponse           *IAPResponseIOS7
+		expectedPendingRenewalInfo *PendingRenewalInfo
+	}{
+		{
+			targetReceipt:              testReceiptStringIOS6_1,
+			expectedResponse:           &expectedResponse,
+			expectedPendingRenewalInfo: nil,
+		},
+		{
+			targetReceipt:    testReceiptStringIOS6_2,
+			expectedResponse: &expectedResponse,
+			expectedPendingRenewalInfo: &PendingRenewalInfo{
+				AutoRenewStatus:    "1",
+				AutoRenewProductID: "com.example.product.item",
+			},
+		},
+		{
+			targetReceipt:    testReceiptStringIOS6_3,
+			expectedResponse: &expectedResponse,
+			expectedPendingRenewalInfo: &PendingRenewalInfo{
+				AutoRenewStatus:    "0",
+				AutoRenewProductID: "com.example.product.item",
+			},
+		},
+	}
+
 	rc := "receipt"
-	r6 := NewIAPResponseIOS6(rc)
-	err := json.Unmarshal([]byte(_receipt), r6)
-	assert.Nil(err)
+	for _, tt := range tests {
+		target := fmt.Sprintf("%+v", tt)
+		if tt.expectedPendingRenewalInfo != nil {
+			tt.expectedResponse.PendingRenewalInfo = []PendingRenewalInfo{*tt.expectedPendingRenewalInfo}
+		}
 
-	r7 := r6.ToIOS7()
-	assert.Equal(0, r7.Status)
-	assert.Equal(6, r7.responseVersion)
-	assert.Equal("receipt", r7.rawReceipt)
-	assert.Equal("dummy_latest_receipt", r7.LatestReceipt)
-	assert.Equal("", r7.Environment)
-	assert.Equal("", r7.Receipt.ReceiptType)
-	assert.Equal(int64(0), r7.Receipt.AdamID)
-	assert.Equal(int64(900000001), r7.Receipt.AppItemID)
-	assert.Equal("com.example.app", r7.Receipt.BundleID)
-	assert.Equal("0.1", r7.Receipt.ApplicationVersion)
-	assert.Equal(int64(0), r7.Receipt.DownloadID)
-	assert.Equal("", r7.Receipt.OriginalApplicationVersion)
-	assert.Equal("", r7.Receipt.RequestDate.RequestDate)
-	assert.Equal("2015-05-09 23:31:28 Etc/GMT", r7.Receipt.OriginalPurchaseDate.OriginalPurchaseDate)
+		r6 := NewIAPResponseIOS6(rc)
+		err := json.Unmarshal([]byte(tt.targetReceipt), r6)
+		assert.Nil(err, target)
 
-	inapp := r7.Receipt.InApp[0]
-	assert.Equal("1", inapp.Quantity)
-	assert.Equal("com.example.product.item", inapp.ProductID)
-	assert.Equal("90000000000001", inapp.TransactionID)
-	assert.Equal("90000000000001", inapp.OriginalTransactionID)
-	assert.Equal("", inapp.IsTrialPeriod)
-	assert.Equal("", inapp.AppItemID)
-	assert.Equal("900000000", inapp.VersionExternalIdentifier)
-	assert.Equal("70000000000001", inapp.WebOrderLineItemID)
-	assert.Equal("2015-05-09 23:31:25 Etc/GMT", inapp.PurchaseDate.PurchaseDate)
-	assert.Equal("2015-05-09 23:31:28 Etc/GMT", inapp.OriginalPurchaseDate.OriginalPurchaseDate)
-	assert.Equal("2015-06-09 23:31:25 Etc/GMT", inapp.ExpiresDate.ExpiresDate)
-	assert.Equal("", inapp.CancellationDate.CancellationDate)
-
-	latest := r7.LatestReceiptInfo[0]
-	assert.Equal("1", latest.Quantity)
-	assert.Equal("com.example.product.item", latest.ProductID)
-	assert.Equal("90000000000002", latest.TransactionID)
-	assert.Equal("10000010000000", latest.OriginalTransactionID)
-	assert.Equal("", latest.IsTrialPeriod)
-	assert.Equal("", latest.AppItemID)
-	assert.Equal("", latest.VersionExternalIdentifier)
-	assert.Equal("70000000000002", latest.WebOrderLineItemID)
-	assert.Equal("2015-11-10 00:31:25 Etc/GMT", latest.PurchaseDate.PurchaseDate)
-	assert.Equal("2015-05-09 23:31:28 Etc/GMT", latest.OriginalPurchaseDate.OriginalPurchaseDate)
-	assert.Equal("2015-12-10 00:31:25 Etc/GMT", latest.ExpiresDate.ExpiresDate)
-	assert.Equal("", latest.CancellationDate.CancellationDate)
+		r7 := r6.ToIOS7()
+		assert.Equal(tt.expectedResponse, r7, target)
+	}
 }
 
 func TestToIOS7ToReceipt(t *testing.T) {
@@ -102,15 +176,10 @@ func TestToIOS7ToReceipt(t *testing.T) {
 
 	rc := "receipt"
 	r6 := NewIAPResponseIOS6(rc)
-	err := json.Unmarshal([]byte(_receipt), r6)
+	err := json.Unmarshal([]byte(testReceiptStringIOS6_1), r6)
 	assert.Nil(err)
 
 	r7 := r6.ToIOS7()
 	r := r7.ToReceipt()
 	assert.Equal(6, r.responseVersion)
 }
-
-var _receipt = `{
-"receipt":{"expires_date_formatted":"2015-06-09 23:31:25 Etc/GMT", "original_purchase_date_pst":"2015-05-09 16:31:28 America/Los_Angeles", "unique_identifier":"f000000000000000000000000000000000000000", "original_transaction_id":"90000000000001", "expires_date":"1433892685000", "app_item_id":"900000001", "transaction_id":"90000000000001", "quantity":"1", "expires_date_formatted_pst":"2015-06-09 16:31:25 America/Los_Angeles", "product_id":"com.example.product.item", "bvrs":"0.1", "unique_vendor_identifier":"F0000000-F000-F000-F000-F00000000000", "web_order_line_item_id":"70000000000001", "original_purchase_date_ms":"1431214288317", "version_external_identifier":"900000000", "bid":"com.example.app", "purchase_date_ms":"1431214285000", "purchase_date":"2015-05-09 23:31:25 Etc/GMT", "purchase_date_pst":"2015-05-09 16:31:25 America/Los_Angeles", "original_purchase_date":"2015-05-09 23:31:28 Etc/GMT", "item_id":"826168883"},
-"latest_receipt_info":{"original_purchase_date_pst":"2015-05-09 16:31:28 America/Los_Angeles", "unique_identifier":"f000000000000000000000000000000000000000", "original_transaction_id":"10000010000000", "expires_date":"1449707485000", "app_item_id":"900000001", "transaction_id":"90000000000002", "quantity":"1", "product_id":"com.example.product.item", "bvrs":"0.1", "bid":"com.example.app", "unique_vendor_identifier":"F0000000-F000-F000-F000-F00000000000", "web_order_line_item_id":"70000000000002", "original_purchase_date_ms":"1431214288000", "expires_date_formatted":"2015-12-10 00:31:25 Etc/GMT", "purchase_date":"2015-11-10 00:31:25 Etc/GMT", "purchase_date_ms":"1447115485000", "expires_date_formatted_pst":"2015-12-09 16:31:25 America/Los_Angeles", "purchase_date_pst":"2015-11-09 16:31:25 America/Los_Angeles", "original_purchase_date":"2015-05-09 23:31:28 Etc/GMT", "item_id":"826168883"}, "status":0,
-"latest_receipt":"dummy_latest_receipt"}`

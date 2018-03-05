@@ -1,5 +1,7 @@
 package appstore
 
+import "strconv"
+
 const verIOS6 = 6
 
 // The IAPResponse type has the response properties
@@ -9,6 +11,10 @@ type IAPResponseIOS6 struct {
 	Receipt           ReceiptIOS6 `json:"receipt"`
 	LatestReceiptInfo ReceiptIOS6 `json:"latest_receipt_info"`
 	LatestReceipt     string      `json:"latest_receipt"`
+
+	// pending_renewal_info in iOS 6 style receipt.
+	AutoRenewStatus    int    `json:"auto_renew_status"`
+	AutoRenewProductID string `json:"auto_renew_product_id"`
 }
 
 func NewIAPResponseIOS6(rc string) *IAPResponseIOS6 {
@@ -26,6 +32,12 @@ func (r *IAPResponseIOS6) ToIOS7() *IAPResponseIOS7 {
 	ios7.Receipt = r.Receipt.ToIOS7()
 	if r.LatestReceiptInfo.TransactionID != "" {
 		ios7.LatestReceiptInfo = []InApp{r.LatestReceiptInfo.ToInApp()}
+	}
+	if r.AutoRenewProductID != "" {
+		ios7.PendingRenewalInfo = []PendingRenewalInfo{{
+			AutoRenewProductID: r.AutoRenewProductID,
+			AutoRenewStatus:    strconv.Itoa(r.AutoRenewStatus),
+		}}
 	}
 	return ios7
 }

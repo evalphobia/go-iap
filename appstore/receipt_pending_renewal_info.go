@@ -1,6 +1,6 @@
 package appstore
 
-// ReceiptPendingRenewalInfo is struct for pending_renewal_info field
+// ReceiptPendingRenewalInfo is struct for pending_renewal_info field.
 type ReceiptPendingRenewalInfo struct {
 	ExpirationIntent   int64  `json:"expiration_intent"`
 	AutoRenewProductID string `json:"auto_renew_product_id"`
@@ -12,10 +12,21 @@ type ReceiptPendingRenewalInfo struct {
 
 type ReceiptPendingRenewalInfos []*ReceiptPendingRenewalInfo
 
-func (r ReceiptPendingRenewalInfos) IsAutoRenewable(productID string) bool {
+// IsAutoRenewStatusOn confirms `auto_renew_status` is enabled for given product id.
+func (r ReceiptPendingRenewalInfos) IsAutoRenewStatusOn(productID string) bool {
 	for _, v := range r {
-		if v.ProductID == productID {
+		if v.AutoRenewProductID == productID {
 			return v.AutoRenewStatus
+		}
+	}
+	return false
+}
+
+// IsAutoRenewStatusOff confirms `auto_renew_status` is disabled for given product id.
+func (r ReceiptPendingRenewalInfos) IsAutoRenewStatusOff(productID string) bool {
+	for _, v := range r {
+		if v.AutoRenewProductID == productID {
+			return !v.AutoRenewStatus
 		}
 	}
 	return false

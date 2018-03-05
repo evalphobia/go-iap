@@ -2,15 +2,21 @@ package appstore
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 )
 
-var testReceipt1 = &Receipt{}
-var testReceipt2 = &Receipt{}
-var testReceipt3 = &Receipt{}
+var (
+	testReceipt1      = &Receipt{}
+	testReceipt2      = &Receipt{}
+	testReceipt3      = &Receipt{}
+	testReceiptIOS6_1 = &Receipt{}
+	testReceiptIOS6_2 = &Receipt{}
+	testReceiptIOS6_3 = &Receipt{}
+)
 
 func init() {
 	initializeReceipts()
@@ -24,12 +30,29 @@ func initializeReceipts() {
 		{testReceipt1, testReceiptString},
 		{testReceipt2, testReceiptString2},
 		{testReceipt3, testReceiptString3},
+		{testReceiptIOS6_1, testReceiptStringIOS6_1},
+		{testReceiptIOS6_2, testReceiptStringIOS6_2},
+		{testReceiptIOS6_3, testReceiptStringIOS6_3},
 	}
 
 	for _, r := range list {
 		var result IAPResponseIOS7
 		json.Unmarshal([]byte(r.data), &result)
 		*r.receipt = *result.ToReceipt()
+	}
+
+	listIOS6 := []struct {
+		receipt *Receipt
+		data    string
+	}{
+		{testReceiptIOS6_1, testReceiptStringIOS6_1},
+		{testReceiptIOS6_2, testReceiptStringIOS6_2},
+		{testReceiptIOS6_3, testReceiptStringIOS6_3},
+	}
+	for _, r := range listIOS6 {
+		var result IAPResponseIOS6
+		json.Unmarshal([]byte(r.data), &result)
+		*r.receipt = *(result.ToIOS7().ToReceipt())
 	}
 }
 
@@ -344,7 +367,7 @@ func TestGetTransactionIDsByProductWithoutExpired(t *testing.T) {
 	}
 }
 
-func TestReceiptPendingRenewalInfoIsAutoRenewable(t *testing.T) {
+func TestReceiptPendingRenewalInfoIsAutoRenewStatusOn(t *testing.T) {
 	assert := assert.New(t)
 
 	tests := []struct {
@@ -354,12 +377,42 @@ func TestReceiptPendingRenewalInfoIsAutoRenewable(t *testing.T) {
 	}{
 		{testReceipt1, "com.example.app.subscription_1", true},
 		{testReceipt1, "com.example.app.subscription_2", false},
+		{testReceiptIOS6_1, "com.example.product.item", false},
+		{testReceiptIOS6_2, "com.example.product.item", true},
+		{testReceiptIOS6_3, "com.example.product.item", false},
 	}
 
 	for _, tt := range tests {
+		target := fmt.Sprintf("%+v", tt)
 		assert.Equal(
 			tt.expected,
-			tt.receipt.PendingRenewalInfo.IsAutoRenewable(tt.productID),
+			tt.receipt.PendingRenewalInfo.IsAutoRenewStatusOn(tt.productID),
+			target,
+		)
+	}
+}
+
+func TestReceiptPendingRenewalInfoIsAutoRenewStatusOff(t *testing.T) {
+	assert := assert.New(t)
+
+	tests := []struct {
+		receipt   *Receipt
+		productID string
+		expected  bool
+	}{
+		{testReceipt1, "com.example.app.subscription_1", false},
+		{testReceipt1, "com.example.app.subscription_2", false},
+		{testReceiptIOS6_1, "com.example.product.item", false},
+		{testReceiptIOS6_2, "com.example.product.item", false},
+		{testReceiptIOS6_3, "com.example.product.item", true},
+	}
+
+	for _, tt := range tests {
+		target := fmt.Sprintf("%+v", tt)
+		assert.Equal(
+			tt.expected,
+			tt.receipt.PendingRenewalInfo.IsAutoRenewStatusOff(tt.productID),
+			target,
 		)
 	}
 }
