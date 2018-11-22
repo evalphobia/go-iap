@@ -10,7 +10,22 @@ type ReceiptPendingRenewalInfo struct {
 	ProductID          string `json:"product_id"`
 }
 
+// IsDifferentAutoRenewProductID checks that AutoRenewProductID is changed from ProductID.
+func (r ReceiptPendingRenewalInfo) IsDifferentAutoRenewProductID() bool {
+	return r.ProductID != r.AutoRenewProductID
+}
+
 type ReceiptPendingRenewalInfos []*ReceiptPendingRenewalInfo
+
+// GetRenewalInfo returns ReceiptPendingRenewalInfo of given productID.
+func (r ReceiptPendingRenewalInfos) GetRenewalInfo(productID string) *ReceiptPendingRenewalInfo {
+	for _, v := range r {
+		if v.AutoRenewProductID == productID {
+			return v
+		}
+	}
+	return nil
+}
 
 // IsAutoRenewStatusOn confirms `auto_renew_status` is enabled for given product id.
 func (r ReceiptPendingRenewalInfos) IsAutoRenewStatusOn(productID string) bool {
