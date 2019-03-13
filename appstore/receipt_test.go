@@ -179,6 +179,54 @@ func TestHasExpired(t *testing.T) {
 	}
 }
 
+func TestShouldSendToTestEnvironment(t *testing.T) {
+	assert := assert.New(t)
+
+	tests := []struct {
+		status   int
+		expected bool
+	}{
+		{21000, false},
+		{21001, false},
+		{21002, false},
+		{21003, false},
+		{21004, false},
+		{21005, false},
+		{21006, false},
+		{21007, true},
+		{21008, false},
+	}
+
+	for _, tt := range tests {
+		receipt := Receipt{Status: tt.status}
+		assert.Equal(tt.expected, receipt.ShouldSendToTestEnvironment())
+	}
+}
+
+func TestShouldSendToProductionEnvironment(t *testing.T) {
+	assert := assert.New(t)
+
+	tests := []struct {
+		status   int
+		expected bool
+	}{
+		{21000, false},
+		{21001, false},
+		{21002, false},
+		{21003, false},
+		{21004, false},
+		{21005, false},
+		{21006, false},
+		{21007, false},
+		{21008, true},
+	}
+
+	for _, tt := range tests {
+		receipt := Receipt{Status: tt.status}
+		assert.Equal(tt.expected, receipt.ShouldSendToProductionEnvironment())
+	}
+}
+
 func TestGetTransactionIDs(t *testing.T) {
 	assert := assert.New(t)
 
