@@ -8,7 +8,7 @@ import (
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"golang.org/x/oauth2/jwt"
-	androidpublisher "google.golang.org/api/androidpublisher/v2"
+	"google.golang.org/api/androidpublisher/v3"
 )
 
 const (
