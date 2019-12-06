@@ -36,6 +36,7 @@ func (r *IAPResponseIOS7) ToReceipt() *Receipt {
 		RequestDate:                ToTime(rr.RequestDate.RequestDateMS),
 		OriginalPurchaseDate:       ToTime(rr.OriginalPurchaseDate.OriginalPurchaseDateMS),
 		LatestReceipt:              r.LatestReceipt,
+		IsRetryable:                r.IsRetryable,
 	}
 	receipt.InApps = ToReceiptInApps(rr.InApp)
 	receipt.LatestReceiptInfo = ToReceiptInApps(r.LatestReceiptInfo)

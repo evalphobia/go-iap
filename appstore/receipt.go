@@ -26,6 +26,7 @@ type Receipt struct {
 	LatestReceipt     string
 
 	PendingRenewalInfo ReceiptPendingRenewalInfos
+	IsRetryable        bool
 }
 
 func (r *Receipt) String() string {
