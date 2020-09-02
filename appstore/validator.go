@@ -58,7 +58,7 @@ func HandleError(status int) error {
 	case 21008:
 		message = "This receipt is from the production environment, but it was sent to the test environment for verification. Send it to the production environment instead."
 	default:
-		message = "An unknown error ocurred"
+		message = "An unknown error occurred"
 	}
 
 	return errors.New(message)
